@@ -51,7 +51,29 @@ class YahooFantasyInterface:
 
 		return players
 
-	# get_available_players
+	def get_available_players(self):
+		if not self.league:
+			raise ValueError("No league was pulled, please ensure a valid League ID")
+		
+		try:
+			available_players = self.league.players('A')
+
+			players = []
+			for player in available_players:
+				if player.position_type == "P":
+					player_info = {
+						"name": player.name.full,
+						"position": player.display_position,
+						"position_type": player.position_type
+					}
+
+					players.append(player_info)
+			
+			return players
+		
+		except AttributeError:
+			print("Free agent method not working")
+			return []
 
 if __name__ == "__main__":
 	with open("config.json", "r") as f:
@@ -66,3 +88,7 @@ if __name__ == "__main__":
 	team_info = yahoo.get_my_roster()
 	for item in team_info:
 		print(item)
+
+	fa_info = yahoo.get_available_players()
+	for player in fa_info:
+		print(player)
