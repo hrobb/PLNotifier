@@ -100,9 +100,10 @@ class PLScraper:
 					if not df.empty:
 						logging.info(f"Found rankings table: {df.columns.tolist()}")
 
-						# Add method for cleaning up the data (verify typing, drop badges, drop "tier" text)
+						df = self._clean_rankings_df(df)
 
 						df.to_csv(cache_file, index=False)
+						
 						return df
 
 				except Exception as e:
@@ -113,8 +114,39 @@ class PLScraper:
 			logging.error(f"Error scraping pitcher rankings: {e}")
 			return None
 		
-	#def _clean_rankings_df
+	def _clean_rankings_df(self, df):
+		"""
+		Clean and standardize the df for processing
+		
+		Args:
+			df: Dataframe from the webpage
+			
+		Returns:
+			Cleaned df
+		"""
 
+		# Ensure rank exists
+		if 'Rank' not in df.columns:
+			df['Rank'] = range(1, len(df) + 1)
+
+		if 'Pitcher' in df.columns:
+			# Remove any trailing parentheses / notes
+			df['Pitcher'] = df['Pitcher'].astype(str).str.replace(r'\s*\([^)]*\)$', '', regex=True)
+			# Remove tiers from the end if they appear
+			df['Pitcher'] = df['Pitcher'].str.replace(r'T\d+$', '', regex=True)
+			# Trim whitespace
+			df['Pitcher'] = df['Pitcher'].str.strip()
+
+		# Take badges out
+		if 'Badges' in df.columns:
+			df = df.drop(columns=['Badges'])
+
+		if 'Rank' in df.columns:
+			df = df.sort_values('Rank')
+
+		df = df.reset_index(drop=True)
+
+		return df
 		
 if __name__ == "__main__":
 	scraper = PLScraper()
